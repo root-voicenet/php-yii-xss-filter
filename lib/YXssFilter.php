@@ -13,7 +13,7 @@
  *  {
  *         return array(
  *                 array(
- *                       'application.filters.XssFilter',
+ *                       'YXssFilter',
  *                       'clean'   => '*',
  *                       'tags'    => 'strict',
  *                       'actions' => 'all'
