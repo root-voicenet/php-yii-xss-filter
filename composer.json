@@ -1,14 +1,18 @@
 {
-  "name": "kozz/yii-xss-filter",
+  "name": "root-voicenet/yii-xss-filter",
   "description": "Yii XSS Filter",
   "keywords": ["Yii", "Filter", "Xss", "YiiXss"],
   "license": "BSD-3-Clause",
+  "version": "0.1",
   "authors": [
     {
       "name": "Opeykin A."
     },
     {
       "name": "Yury Kozyrev"
+    },
+	{
+      "name": "Serg Voicenet"
     }
   ],
   "autoload": {

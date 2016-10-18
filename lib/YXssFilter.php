@@ -38,19 +38,17 @@
  *   'actions' => 'admin,manage' - фильтровать только экшены admin и manage
  */
 
-class YXssFilter extends CFilter
+class YXssFilter extends \CFilter
 {
-
   public  $clean   = '*';
   public  $tags    = 'strict';
   public  $actions = '*';
-
-  protected function preFilter($filterChain)
-  {
+  
+  
+  protected function preFilter($filterChain) {
     $this->actions = trim(strtoupper($this->actions));
     // если экшн обрабатывать нет необходимости - просто выходим из фильтра
-    if($this->actions != '*' && $this->actions != 'ALL' && !in_array($filterChain->action->id,explode(',',$this->actions)))
-    {
+    if ($this->actions != '*' && $this->actions != 'ALL' && !in_array($filterChain->action->id,explode(',',$this->actions))) {
       return true;
     }
     $this->clean  = trim(strtoupper($this->clean));
@@ -61,64 +59,40 @@ class YXssFilter extends CFilter
       'COOKIE' => &$_COOKIE,
       'FILES'  => &$_FILES
     );
-
-    if($this->clean === 'ALL' || $this->clean === '*')
-    {
+    if ($this->clean === 'ALL' || $this->clean === '*') {
       $this->clean = 'GET,POST,COOKIE,FILES';
     }
-
     // по умолчанию - strict
-    if(!in_array($this->tags,array('STRICT','SOFT','NONE')))
-    {
+    if (!in_array($this->tags,array('STRICT','SOFT','NONE'))) {
       $this->tags = 'STRICT';
     }
-
-
-
     $dataForClean = explode(',',$this->clean);
-    if(!empty($dataForClean))
-    {
-      foreach ($dataForClean as $key => $value)
-      {
-        if(isset ($data[$value]) && !empty($data[$value]))
-        {
+    if (!empty($dataForClean)) {
+      foreach ($dataForClean as $key => $value) {
+        if (isset ($data[$value]) && !empty($data[$value])) {
           $this->doXssClean($data[$value]);
         }
       }
     }
-
-
-    if (isset($_SERVER['HTTP_REFERER']))
-    {
-      $_SERVER['HTTP_REFERER'] = CHtml::encode($_SERVER['HTTP_REFERER']);
+    if (isset($_SERVER['HTTP_REFERER'])) {
+      $_SERVER['HTTP_REFERER'] = \CHtml::encode($_SERVER['HTTP_REFERER']);
     }
-
     return true;
   }
-
-
-  private function doXssClean(&$data)
-  {
-    if(is_array($data) && !empty($data))
-    {
-      foreach($data as $k => $v)
-      {
+  private function doXssClean(&$data) {
+    if (is_array($data) && !empty($data)) {
+      foreach($data as $k => $v) {
         $data[$k] = $this->doXssClean($v);
       }
       return $data;
     }
-
-    if(trim($data) === '')
-    {
+    if (trim($data) === '') {
       return $data;
     }
-
-
     // перед фильтрацией разберемся с тегами
-    switch ($this->tags)
-    {
+    switch ($this->tags) {
       case 'STRICT':
-        $data = CHtml::encode($data);
+        $data = \CHtml::encode($data);
         break;
       case 'SOFT':
         $data = htmlentities($data,ENT_QUOTES,'UTF-8');
@@ -129,7 +103,6 @@ class YXssFilter extends CFilter
       default:
         $data = strip_tags($data);
     }
-
     // xss_clean function from Kohana framework 2.3.4
     $data = str_replace(array('&amp;','&lt;','&gt;'), array('&amp;amp;','&amp;lt;','&amp;gt;'), $data);
     $data = preg_replace('/(&#*\w+)[\x00-\x20]+;/u', '$1;', $data);
@@ -147,14 +120,13 @@ class YXssFilter extends CFilter
     $data = preg_replace('#(<[^>]+?)style[\x00-\x20]*=[\x00-\x20]*[`\'"]*.*?s[\x00-\x20]*c[\x00-\x20]*r[\x00-\x20]*i[\x00-\x20]*p[\x00-\x20]*t[\x00-\x20]*:*[^>]*+>#iu', '$1>', $data);
     // Remove namespaced elements (we do not need them)
     $data = preg_replace('#</*\w+:\w[^>]*+>#i', '', $data);
-    do
-    {
+    do {
+		
       // Remove really unwanted tags
       $old_data = $data;
       $data = preg_replace('#</*(?:applet|b(?:ase|gsound|link)|embed|frame(?:set)?|i(?:frame|layer)|l(?:ayer|ink)|meta|object|s(?:cript|tyle)|title|xml)[^>]*+>#i', '', $data);
-    }
-    while ($old_data !== $data);
+	  
+    } while ($old_data !== $data);
     return $data;
   }
-
 }
