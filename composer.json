@@ -3,7 +3,7 @@
   "description": "Yii XSS Filter",
   "keywords": ["Yii", "Filter", "Xss", "YiiXss"],
   "license": "BSD-3-Clause",
-  "version": "0.1",
+  "version": "0.2",
   "authors": [
     {
       "name": "Opeykin A."
