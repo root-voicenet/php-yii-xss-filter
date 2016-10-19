@@ -1,13 +1,14 @@
 <?php
+
 /**
- *  @author  Opeykin A. <http://andrey.opeykin.ru> <developer@allframeworks.ru>
- *  @version 0.0.2
- *  @package filters
+ * @author  Opeykin A. <http://andrey.opeykin.ru> <developer@allframeworks.ru>
+ * @version 0.0.2
+ * @package filters
  *
  *  Фильтр предназначен для фильтрации входных данных, c целью предотвратить xss атаки.
  *  Для фильтрации используются регулярные выражения из фреймворка Kohana версии 2.3.4
  *
- *  @example
+ * @example
  *
  *  public function filters()
  *  {
@@ -37,40 +38,33 @@
  *  - можно указать экшены через запятую, пример
  *   'actions' => 'admin,manage' - фильтровать только экшены admin и manage
  */
+class YXssFilter extends \CFilter {
+  public $clean = '*';
+  public $tags = 'strict';
+  public $actions = '*';
 
-class YXssFilter extends \CFilter
-{
-  public  $clean   = '*';
-  public  $tags    = 'strict';
-  public  $actions = '*';
-  
-  
+
   protected function preFilter($filterChain) {
     $this->actions = trim(strtoupper($this->actions));
     // если экшн обрабатывать нет необходимости - просто выходим из фильтра
-    if ($this->actions != '*' && $this->actions != 'ALL' && !in_array($filterChain->action->id,explode(',',$this->actions))) {
+    if ($this->actions != '*' && $this->actions != 'ALL' && !in_array($filterChain->action->id, explode(',', $this->actions))) {
       return true;
     }
-    $this->clean  = trim(strtoupper($this->clean));
-    $this->tags   = trim(strtoupper($this->tags));
-    $data = array(
-      'GET'    => &$_GET,
-      'POST'   => &$_POST,
-      'COOKIE' => &$_COOKIE,
-      'FILES'  => &$_FILES
-    );
+    $this->clean = trim(strtoupper($this->clean));
+    $this->tags  = trim(strtoupper($this->tags));
+    $data        = array('GET' => &$_GET, 'POST' => &$_POST, 'COOKIE' => &$_COOKIE, 'FILES' => &$_FILES);
     if ($this->clean === 'ALL' || $this->clean === '*') {
       $this->clean = 'GET,POST,COOKIE,FILES';
     }
     // по умолчанию - strict
-    if (!in_array($this->tags,array('STRICT','SOFT','NONE'))) {
+    if (!in_array($this->tags, array('STRICT', 'SOFT', 'NONE'))) {
       $this->tags = 'STRICT';
     }
-    $dataForClean = explode(',',$this->clean);
+    $dataForClean = explode(',', $this->clean);
     if (!empty($dataForClean)) {
       foreach ($dataForClean as $key => $value) {
         if (isset ($data[$value]) && !empty($data[$value])) {
-          $this->doXssClean($data[$value]);
+          self::doXssClean($data[$value], $this->tags);
         }
       }
     }
@@ -79,10 +73,11 @@ class YXssFilter extends \CFilter
     }
     return true;
   }
-  private function doXssClean(&$data) {
+
+  private static function doXssClean(&$data, $tags) {
     if (is_array($data) && !empty($data)) {
-      foreach($data as $k => $v) {
-        $data[$k] = $this->doXssClean($v);
+      foreach ($data as $k => $v) {
+        $data[$k] = self::doXssClean($v, $tags);
       }
       return $data;
     }
@@ -90,12 +85,12 @@ class YXssFilter extends \CFilter
       return $data;
     }
     // перед фильтрацией разберемся с тегами
-    switch ($this->tags) {
+    switch ($tags) {
       case 'STRICT':
         $data = \CHtml::encode($data);
         break;
       case 'SOFT':
-        $data = htmlentities($data,ENT_QUOTES,'UTF-8');
+        $data = htmlentities($data, ENT_QUOTES, 'UTF-8');
         break;
       case 'NONE':
         break;
@@ -104,7 +99,7 @@ class YXssFilter extends \CFilter
         $data = strip_tags($data);
     }
     // xss_clean function from Kohana framework 2.3.4
-    $data = str_replace(array('&amp;','&lt;','&gt;'), array('&amp;amp;','&amp;lt;','&amp;gt;'), $data);
+    $data = str_replace(array('&amp;', '&lt;', '&gt;'), array('&amp;amp;', '&amp;lt;', '&amp;gt;'), $data);
     $data = preg_replace('/(&#*\w+)[\x00-\x20]+;/u', '$1;', $data);
     $data = preg_replace('/(&#x*[0-9A-F]+);*/iu', '$1;', $data);
     $data = html_entity_decode($data, ENT_COMPAT, 'UTF-8');
@@ -121,12 +116,16 @@ class YXssFilter extends \CFilter
     // Remove namespaced elements (we do not need them)
     $data = preg_replace('#</*\w+:\w[^>]*+>#i', '', $data);
     do {
-		
+
       // Remove really unwanted tags
       $old_data = $data;
-      $data = preg_replace('#</*(?:applet|b(?:ase|gsound|link)|embed|frame(?:set)?|i(?:frame|layer)|l(?:ayer|ink)|meta|object|s(?:cript|tyle)|title|xml)[^>]*+>#i', '', $data);
-	  
+      $data     = preg_replace('#</*(?:applet|b(?:ase|gsound|link)|embed|frame(?:set)?|i(?:frame|layer)|l(?:ayer|ink)|meta|object|s(?:cript|tyle)|title|xml)[^>]*+>#i', '', $data);
+
     } while ($old_data !== $data);
     return $data;
+  }
+
+  public static function clean($input, $tags = 'STRICT') {
+    return self::doXssClean($input, $tags);
   }
 }
