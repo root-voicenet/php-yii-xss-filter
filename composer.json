@@ -3,7 +3,7 @@
   "description": "Yii XSS Filter",
   "keywords": ["Yii", "Filter", "Xss", "YiiXss"],
   "license": "BSD-3-Clause",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "authors": [
     {
       "name": "Opeykin A."
@@ -26,7 +26,7 @@
     }
   },
   "require": {
-    "yiisoft/yii": "~1.1",
+    "yiisoft/yii": "~1.1.*",
     "php":">=5.3"
   },
   "require-dev": {
